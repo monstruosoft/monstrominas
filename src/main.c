@@ -49,6 +49,8 @@
 #define MINESWEEPER_COLUMNS     10
 #define MINESWEEPER_MINES       10
 #define MINESWEEPER_CELL_SIZE   32
+#define MINESWEEPER_WARNING      1
+#define MINESWEEPER_DANGER       2
 
 
 
@@ -56,7 +58,9 @@ typedef struct MINESWEEPER_FIELD {
     bool cells[MINESWEEPER_ROWS][MINESWEEPER_COLUMNS];
     int hints[MINESWEEPER_ROWS][MINESWEEPER_COLUMNS];
     bool state[MINESWEEPER_ROWS][MINESWEEPER_COLUMNS];
+    int flags[MINESWEEPER_ROWS][MINESWEEPER_COLUMNS];
     int cell_count;
+    bool complete;
 } MINESWEEPER_FIELD;
 
 
@@ -140,6 +144,11 @@ void minesweeper_field_draw(MINESWEEPER_FIELD *field) {
             }
             if (field->hints[row][col] != 0 && field->state[row][col])
                 al_draw_textf(font, black, x1, y1, 0, "%d", field->hints[row][col]);
+
+            if (field->flags[row][col] != 0)
+                al_draw_filled_rectangle(x1, y1, x2, y2, al_map_rgba(255, 92 * field->flags[row][col], 0, 255));
+            if (field->complete)
+                al_draw_text(font, black, 50, 50, 0, "WIN!!!!1");
         }
 }
 
@@ -164,20 +173,23 @@ void minesweeper_field_uncover(MINESWEEPER_FIELD *field, int row, int col) {
 
 void minesweeper_field_logic(MINESWEEPER_FIELD *field, ALLEGRO_EVENT *event) {
     if (event->any.source == al_get_mouse_event_source()) {
+        int row = event->mouse.y / MINESWEEPER_CELL_SIZE;
+        int col = event->mouse.x / MINESWEEPER_CELL_SIZE;
         if (event->type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN && event->mouse.button == 1) {
-            int row = event->mouse.y / MINESWEEPER_CELL_SIZE;
-            int col = event->mouse.x / MINESWEEPER_CELL_SIZE;
+            if (field->flags[row][col] != 0 || field->state[row][col]) return;
             if (field->cells[row][col]) game_over = true;
             field->state[row][col] = true;
             field->cell_count--;
             if (field->hints[row][col] == 0)
                 minesweeper_field_uncover(field, row, col);
         }
+        else if (event->type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN && event->mouse.button == 2) {
+            if (!field->state[row][col])
+                field->flags[row][col] = (field->flags[row][col] + 1) % 3;
+        }
     }
-    if (field->cell_count <= MINESWEEPER_MINES) {
-        printf("WIN");
-        game_over = true;
-    }
+    if (field->cell_count <= MINESWEEPER_MINES)
+        field->complete = true;
 }
 
 
