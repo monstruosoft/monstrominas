@@ -45,10 +45,10 @@
 
 
 
-#define MINESWEEPER_ROWS        16
-#define MINESWEEPER_COLUMNS     10
-#define MINESWEEPER_MINES       10
-#define MINESWEEPER_CELL_SIZE   32
+#define MINESWEEPER_ROWS        20
+#define MINESWEEPER_COLUMNS     16
+#define MINESWEEPER_MINES       16
+#define MINESWEEPER_CELL_SIZE   20
 #define MINESWEEPER_WARNING      1
 #define MINESWEEPER_DANGER       2
 
@@ -132,18 +132,25 @@ MINESWEEPER_FIELD *minesweeper_field_create() {
 void minesweeper_field_draw(MINESWEEPER_FIELD *field) {
     ALLEGRO_COLOR color = al_color_name("lightgray");
     ALLEGRO_COLOR black = al_color_name("black");
+    ALLEGRO_COLOR white = al_color_name("white");
+    int font_height = al_get_font_line_height(font);
 
     for (int row = 0; row < MINESWEEPER_ROWS; row++)
         for (int col = 0; col < MINESWEEPER_COLUMNS; col++) {
             int x1 = col * MINESWEEPER_CELL_SIZE, y1 = row * MINESWEEPER_CELL_SIZE;
             int x2 = x1 + MINESWEEPER_CELL_SIZE, y2 = y1 + MINESWEEPER_CELL_SIZE;
-            al_draw_filled_rectangle(x1, y1, x2, y2, al_color_name("lightgray"));
             if (!field->state[row][col]) {
                 al_draw_filled_rectangle(x1, y1, x2, y2, al_color_name("darkgray"));
-                al_draw_rectangle(x1, y1, x2, y2, black, 2);
+                al_draw_rectangle(x1, y1, x2 - 1, y2 - 1, black, 1);
+                al_draw_line(x1, y1, x2, y1, white, 1);
+                al_draw_line(x1, y1, x1, y2, white, 1);
+            }
+            else {
+                al_draw_filled_rectangle(x1, y1, x2, y2, al_color_name("lightgray"));
+                al_draw_rectangle(x1, y1, x2, y2, al_map_rgba(64, 64, 64, 128), 1);
             }
             if (field->hints[row][col] != 0 && field->state[row][col])
-                al_draw_textf(font, black, x1, y1, 0, "%d", field->hints[row][col]);
+                al_draw_textf(font, black, x1 + MINESWEEPER_COLUMNS / 2, y1 + (MINESWEEPER_CELL_SIZE - font_height), ALLEGRO_ALIGN_CENTER, "%d", field->hints[row][col]);
 
             if (field->flags[row][col] != 0)
                 al_draw_filled_rectangle(x1, y1, x2, y2, al_map_rgba(255, 92 * field->flags[row][col], 0, 255));
@@ -292,7 +299,7 @@ void initialization() {
     assert(al_init_font_addon());
     assert(al_init_ttf_addon());
 
-    font = al_load_ttf_font("data/ZillaSlab-Regular.otf", 32, 0);
+    font = al_load_ttf_font("data/ZillaSlab-Regular.otf", MINESWEEPER_CELL_SIZE, 0);
     events = al_create_event_queue();
     assert(events);
     timer = al_create_timer(ALLEGRO_BPS_TO_SECS(30));
