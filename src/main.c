@@ -41,13 +41,16 @@
 #include <allegro5/allegro_font.h>
 #include <allegro5/allegro_color.h>
 #include <allegro5/allegro_primitives.h>
+#ifdef __ANDROID__
+#include <allegro5/allegro_android.h>
+#endif
 #include "game.h"
 
 
 
-#define MINESWEEPER_ROWS        20
+#define MINESWEEPER_ROWS        30
 #define MINESWEEPER_COLUMNS     16
-#define MINESWEEPER_MINES       16
+#define MINESWEEPER_MINES       85
 #define MINESWEEPER_CELL_SIZE   20
 #define MINESWEEPER_WARNING      1
 #define MINESWEEPER_DANGER       2
@@ -299,6 +302,10 @@ void initialization() {
     assert(al_init_font_addon());
     assert(al_init_ttf_addon());
 
+#ifdef __ANDROID__
+    printf("Android version: %s", al_android_get_os_version());
+    al_android_set_apk_file_interface();
+#endif
     font = al_load_ttf_font("data/ZillaSlab-Regular.otf", MINESWEEPER_CELL_SIZE, 0);
     events = al_create_event_queue();
     assert(events);
