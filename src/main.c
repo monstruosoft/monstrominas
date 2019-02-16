@@ -40,6 +40,7 @@
 #include <allegro5/allegro_ttf.h>
 #include <allegro5/allegro_font.h>
 #include <allegro5/allegro_color.h>
+#include <allegro5/allegro_image.h>
 #include <allegro5/allegro_primitives.h>
 #ifdef __ANDROID__
 #include <allegro5/allegro_android.h>
@@ -49,12 +50,18 @@
 
 
 
+#define MAX_BACKGROUNDS     10
+
+
+
 // Allegro global variables
 ALLEGRO_EVENT_QUEUE *events = NULL;
 ALLEGRO_DISPLAY *display = NULL;
 ALLEGRO_TIMER *timer = NULL;
 ALLEGRO_FONT *font = NULL;
 ALLEGRO_EVENT event;
+ALLEGRO_PATH *bg[MAX_BACKGROUNDS] = {0};
+ALLEGRO_BITMAP *background = NULL;
 
 bool game_over = false;
 bool redraw = true;
@@ -81,7 +88,7 @@ void minesweeper_field_draw(MINESWEEPER_FIELD *field) {
                 al_draw_line(x1, y1, x1, y2, white, 1);
             }
             else {
-                al_draw_filled_rectangle(x1, y1, x2, y2, al_color_name("lightgray"));
+                // al_draw_filled_rectangle(x1, y1, x2, y2, al_color_name("lightgray"));
                 al_draw_rectangle(x1, y1, x2, y2, al_map_rgba(64, 64, 64, 128), 1);
             }
             if (field->hints[row][col] != 0 && field->state[row][col])
@@ -188,7 +195,12 @@ void logic(ALLEGRO_EVENT *event) {
  * Screen update.
  */
 void update() {
-    al_clear_to_color(al_map_rgb(64, 64, 128));
+    al_clear_to_color(al_map_rgb(255, 255, 255));
+    int w = al_get_bitmap_width(background), 
+        h = al_get_bitmap_height(background),
+        w2 = MINESWEEPER_CELL_SIZE * MINESWEEPER_COLUMNS, 
+        h2 = MINESWEEPER_CELL_SIZE * MINESWEEPER_ROWS;
+    al_draw_tinted_scaled_bitmap(background, al_map_rgba(128, 128, 128, 128), 0, 0, w, h, 0, 0, w2, h2, 0);
     game_actor_draw(actor);
 }
 
@@ -206,6 +218,7 @@ void initialization() {
     display = al_create_display(800, 600);
     assert(display);
     assert(al_init_primitives_addon());
+    assert(al_init_image_addon());
     assert(al_init_font_addon());
     assert(al_init_ttf_addon());
 
@@ -228,6 +241,31 @@ void initialization() {
 // Game initialization
     actor = minesweeper_field_actor();
     game_actor_print(actor);
+
+// Find potential background images
+    int count = 0;
+    ALLEGRO_FS_ENTRY *dir = al_create_fs_entry("data");
+    assert(al_fs_entry_exists(dir));
+    assert(al_open_directory(dir));
+    ALLEGRO_FS_ENTRY *file = al_read_directory(dir);
+    printf("Available background images: \n");
+    while (file != NULL && count < MAX_BACKGROUNDS) {
+        ALLEGRO_PATH *path = al_create_path(al_get_fs_entry_name(file));
+        assert(path);
+        if (strcmp(al_get_path_extension(path), ".jpg") == 0) {
+            printf("file: %s\n", al_get_fs_entry_name(file));
+            bg[count++] = path;
+        }
+        else al_destroy_path(path);
+        file = al_read_directory(dir);
+    }
+    assert(al_close_directory(dir));
+
+// Randomly choose background images from those available
+    int choice = rand() % count;
+    printf("Choosing background %d: %s\n", choice, al_path_cstr(bg[choice], '/'));
+    background = al_load_bitmap(al_path_cstr(bg[choice], '/'));
+    assert(background);
 }
 
 
