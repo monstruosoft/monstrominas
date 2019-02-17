@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdlib.h>
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_ttf.h>
 #include <allegro5/allegro_font.h>
@@ -77,8 +78,8 @@ void minesweeper_field_draw(MINESWEEPER_FIELD *field) {
     ALLEGRO_COLOR white = al_color_name("white");
     int font_height = al_get_font_line_height(font);
 
-    for (int row = 0; row < MINESWEEPER_ROWS; row++)
-        for (int col = 0; col < MINESWEEPER_COLUMNS; col++) {
+    for (int row = 0; row < field->rows; row++)
+        for (int col = 0; col < field->cols; col++) {
             int x1 = col * MINESWEEPER_CELL_SIZE, y1 = row * MINESWEEPER_CELL_SIZE;
             int x2 = x1 + MINESWEEPER_CELL_SIZE, y2 = y1 + MINESWEEPER_CELL_SIZE;
             if (!((bool (*)[field->cols])field->state)[row][col]) {
@@ -92,7 +93,7 @@ void minesweeper_field_draw(MINESWEEPER_FIELD *field) {
                 al_draw_rectangle(x1, y1, x2, y2, al_map_rgba(64, 64, 64, 128), 1);
             }
             if (((int (*)[field->cols])field->hints)[row][col] != 0 && ((bool (*)[field->cols])field->state)[row][col])
-                al_draw_textf(font, black, x1 + MINESWEEPER_COLUMNS / 2, y1 + (MINESWEEPER_CELL_SIZE - font_height), ALLEGRO_ALIGN_CENTER, "%d", ((int (*)[field->cols])field->hints)[row][col]);
+                al_draw_textf(font, black, x1 + field->cols / 2, y1 + (MINESWEEPER_CELL_SIZE - font_height), ALLEGRO_ALIGN_CENTER, "%d", ((int (*)[field->cols])field->hints)[row][col]);
 
             if (((int (*)[field->cols])field->flags)[row][col] != 0)
                 al_draw_filled_rectangle(x1, y1, x2, y2, al_map_rgba(255, 92 * ((int (*)[field->cols])field->flags)[row][col], 0, 255));
@@ -118,9 +119,9 @@ void minesweeper_field_logic(MINESWEEPER_FIELD *field, ALLEGRO_EVENT *event) {
 
 
 
-GAME_ACTOR *minesweeper_field_actor() {
+GAME_ACTOR *minesweeper_field_actor(int rows, int cols) {
     GAME_ACTOR *actor = game_actor_create();
-    actor->data = minesweeper_field_create(MINESWEEPER_ROWS, MINESWEEPER_COLUMNS);
+    actor->data = minesweeper_field_create(rows, cols);
     actor->print = minesweeper_field_print;
     actor->draw = minesweeper_field_draw;
     actor->logic = minesweeper_field_logic;
@@ -208,7 +209,7 @@ void update() {
 /*
  * Game initialization.
  */
-void initialization() {
+void initialization(int rows, int cols) {
 // Allegro initialization
     assert(al_init());
     assert(al_install_keyboard());
@@ -226,7 +227,8 @@ void initialization() {
     printf("Android version: %s", al_android_get_os_version());
     al_android_set_apk_file_interface();
 #endif
-    font = al_load_ttf_font("data/ZillaSlab-Regular.otf", MINESWEEPER_CELL_SIZE, 0);
+    font = al_load_ttf_font("data/ZillaSlab-Bold.ttf", MINESWEEPER_CELL_SIZE, 0);
+    assert(font);
     events = al_create_event_queue();
     assert(events);
     timer = al_create_timer(ALLEGRO_BPS_TO_SECS(30));
@@ -239,7 +241,7 @@ void initialization() {
     srand(time(NULL));
 
 // Game initialization
-    actor = minesweeper_field_actor();
+    actor = minesweeper_field_actor(rows, cols);
     game_actor_print(actor);
 
 // Find potential background images
@@ -276,7 +278,13 @@ void initialization() {
  * Game loop.
  */
 int main(int argc, char **argv) {
-    initialization();
+// Parse command line arguments
+    int rows = MINESWEEPER_ROWS, cols = MINESWEEPER_COLUMNS;
+    if (argc > 2) {
+        rows = strtol(argv[2], NULL, 10);
+        cols = strtol(argv[1], NULL, 10);
+    }
+    initialization(rows, cols);
     
     while (!game_over) {
         al_wait_for_event(events, &event);

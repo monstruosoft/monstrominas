@@ -6,7 +6,7 @@ OPTION (WANT_DEBUG "Build the project using debugging code" OFF)
 
 SET (BASE_DIRECTORY .)
 SET (SOURCE_DIR ${BASE_DIRECTORY}/src)
-SET (CMAKE_C_FLAGS "-std=gnu99 -fgnu89-inline")
+SET (CMAKE_C_FLAGS "-std=gnu99 -fgnu89-inline -g")
 PKG_CHECK_MODULES (ALLEGRO5 allegro-5 allegro_image-5 allegro_font-5 allegro_primitives-5 allegro_color-5 allegro_ttf-5)
 
 IF (WANT_DEBUG)

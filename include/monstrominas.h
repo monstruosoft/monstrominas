@@ -4,6 +4,8 @@
 #define MINESWEEPER_CELL_SIZE   20
 #define MINESWEEPER_WARNING      1
 #define MINESWEEPER_DANGER       2
+#define MINESWEEPER_MIN_RATIO    0.1
+#define MINESWEEPER_MAX_RATIO    0.2
 
 
 
@@ -15,6 +17,7 @@ typedef struct MINESWEEPER_FIELD {
     int rows;
     int cols;
     int cell_count;
+    int mine_count;
     bool complete;
 } MINESWEEPER_FIELD;
 
