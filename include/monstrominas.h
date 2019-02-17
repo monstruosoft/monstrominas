@@ -1,5 +1,5 @@
-#define MINESWEEPER_ROWS        30
-#define MINESWEEPER_COLUMNS     16
+#define MINESWEEPER_ROWS        10
+#define MINESWEEPER_COLUMNS     10
 #define MINESWEEPER_MINES       85
 #define MINESWEEPER_CELL_SIZE   20
 #define MINESWEEPER_WARNING      1
@@ -10,6 +10,7 @@
 
 
 typedef struct MINESWEEPER_FIELD {
+// Core fields
     bool *cells;
     int *hints;
     bool *state;
@@ -17,8 +18,12 @@ typedef struct MINESWEEPER_FIELD {
     int rows;
     int cols;
     int cell_count;
+    int cell_size;
     int mine_count;
     bool complete;
+// Implementation specific fields
+    int x_offset;
+    int y_offset;
 } MINESWEEPER_FIELD;
 
 

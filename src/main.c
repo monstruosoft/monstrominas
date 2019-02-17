@@ -51,7 +51,11 @@
 
 
 
-#define MAX_BACKGROUNDS     10
+#define SCR_WIDTH           800
+#define SCR_HEIGHT          600
+#define MAX_ROWS             36
+#define MAX_COLS             50
+#define MAX_BACKGROUNDS      10
 
 
 
@@ -80,8 +84,8 @@ void minesweeper_field_draw(MINESWEEPER_FIELD *field) {
 
     for (int row = 0; row < field->rows; row++)
         for (int col = 0; col < field->cols; col++) {
-            int x1 = col * MINESWEEPER_CELL_SIZE, y1 = row * MINESWEEPER_CELL_SIZE;
-            int x2 = x1 + MINESWEEPER_CELL_SIZE, y2 = y1 + MINESWEEPER_CELL_SIZE;
+            int x1 = field->x_offset + col * field->cell_size, y1 = field->y_offset + row * field->cell_size;
+            int x2 = x1 + field->cell_size, y2 = y1 + field->cell_size;
             if (!((bool (*)[field->cols])field->state)[row][col]) {
                 al_draw_filled_rectangle(x1, y1, x2, y2, al_color_name("darkgray"));
                 al_draw_rectangle(x1, y1, x2 - 1, y2 - 1, black, 1);
@@ -93,7 +97,7 @@ void minesweeper_field_draw(MINESWEEPER_FIELD *field) {
                 al_draw_rectangle(x1, y1, x2, y2, al_map_rgba(64, 64, 64, 128), 1);
             }
             if (((int (*)[field->cols])field->hints)[row][col] != 0 && ((bool (*)[field->cols])field->state)[row][col])
-                al_draw_textf(font, black, x1 + field->cols / 2, y1 + (MINESWEEPER_CELL_SIZE - font_height), ALLEGRO_ALIGN_CENTER, "%d", ((int (*)[field->cols])field->hints)[row][col]);
+                al_draw_textf(font, black, x1 + field->cols / 2, y1 + (field->cell_size - font_height), ALLEGRO_ALIGN_CENTER, "%d", ((int (*)[field->cols])field->hints)[row][col]);
 
             if (((int (*)[field->cols])field->flags)[row][col] != 0)
                 al_draw_filled_rectangle(x1, y1, x2, y2, al_map_rgba(255, 92 * ((int (*)[field->cols])field->flags)[row][col], 0, 255));
@@ -106,8 +110,8 @@ void minesweeper_field_draw(MINESWEEPER_FIELD *field) {
 
 void minesweeper_field_logic(MINESWEEPER_FIELD *field, ALLEGRO_EVENT *event) {
     if (event->any.source == al_get_mouse_event_source()) {
-        int row = event->mouse.y / MINESWEEPER_CELL_SIZE;
-        int col = event->mouse.x / MINESWEEPER_CELL_SIZE;
+        int row = (event->mouse.y - field->y_offset) / field->cell_size;
+        int col = (event->mouse.x - field->x_offset) / field->cell_size;
         if (event->type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN && event->mouse.button == 1) {
             game_over = !minesweeper_event_uncover(field, row, col);
         }
@@ -196,12 +200,20 @@ void logic(ALLEGRO_EVENT *event) {
  * Screen update.
  */
 void update() {
-    al_clear_to_color(al_map_rgb(255, 255, 255));
+    al_clear_to_color(al_map_rgb(0, 128, 128));
+    MINESWEEPER_FIELD *field = actor->data;
     int w = al_get_bitmap_width(background), 
-        h = al_get_bitmap_height(background),
-        w2 = MINESWEEPER_CELL_SIZE * MINESWEEPER_COLUMNS, 
-        h2 = MINESWEEPER_CELL_SIZE * MINESWEEPER_ROWS;
-    al_draw_tinted_scaled_bitmap(background, al_map_rgba(128, 128, 128, 128), 0, 0, w, h, 0, 0, w2, h2, 0);
+        h = al_get_bitmap_height(background);
+    float scalex = SCR_WIDTH * 1.0 / w,
+          scaley = SCR_HEIGHT * 1.0 / h;
+    int w2 = field->cell_size * field->cols, 
+        h2 = field->cell_size * field->rows,
+        sx = w / 2 - w2 / scalex / 2,                        // Bitmap region
+        sy = h / 2 - h2 / scaley / 2;
+    al_draw_tinted_scaled_rotated_bitmap_region(background, 0, 0, w, h, al_map_rgba(32, 32, 32, 32), 0, 0, 0, 0, scalex, scaley, 0, 0);
+    al_draw_filled_rectangle(field->x_offset, field->y_offset, field->x_offset + w2, field->y_offset + h2, al_map_rgb(255, 255, 255));
+    // al_draw_tinted_scaled_bitmap(background, al_map_rgba(32, 32, 32, 32), 0, 0, w, h, field->x_offset, field->y_offset, w, h, 0);
+    al_draw_tinted_scaled_rotated_bitmap_region(background, sx, sy, w2 / scalex, h2 / scaley, al_map_rgba(128, 128, 128, 128), 0, 0, SCR_WIDTH / 2 - w2 / 2, SCR_HEIGHT / 2 - h2 / 2, scalex, scaley, 0, 0);
     game_actor_draw(actor);
 }
 
@@ -215,8 +227,8 @@ void initialization(int rows, int cols) {
     assert(al_install_keyboard());
     assert(al_install_mouse());
     al_set_new_display_flags(ALLEGRO_WINDOWED);
-    al_set_new_window_title("my monstruosoft game");
-    display = al_create_display(800, 600);
+    al_set_new_window_title("Monstrominas by monstruosoft");
+    display = al_create_display(SCR_WIDTH, SCR_HEIGHT);
     assert(display);
     assert(al_init_primitives_addon());
     assert(al_init_image_addon());
@@ -241,8 +253,15 @@ void initialization(int rows, int cols) {
     srand(time(NULL));
 
 // Game initialization
+    rows = rows <= MAX_ROWS ? rows : MAX_ROWS;
+    cols = cols <= MAX_COLS ? cols : MAX_COLS;
     actor = minesweeper_field_actor(rows, cols);
     game_actor_print(actor);
+    MINESWEEPER_FIELD *field = actor->data;
+    int x_size = field->cols * field->cell_size;
+    int y_size = field->rows * field->cell_size;
+    field->x_offset = SCR_WIDTH / 2 - x_size / 2;
+    field->y_offset = SCR_HEIGHT / 2 - y_size / 2;
 
 // Find potential background images
     int count = 0;

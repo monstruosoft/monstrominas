@@ -71,6 +71,7 @@ MINESWEEPER_FIELD *minesweeper_field_create(int rows, int cols) {
 
     field->cell_count = field->rows * field->cols;
     field->mine_count = mines;
+    field->cell_size = MINESWEEPER_CELL_SIZE;
     printf("Created minesweeper field: %dx%d cells, %d mines (%f mine ratio)\n", field->rows, field->cols, field->mine_count, ratio);
 
     return field;
@@ -110,6 +111,8 @@ bool minesweeper_event_uncover(MINESWEEPER_FIELD *field, int row, int col) {
     bool (*state)[field->cols] = (bool (*)[])field->state;
     int (*flags)[field->cols] = (int (*)[])field->flags;
 
+    if (row < 0 || row >= field->rows) return;
+    if (col < 0 || col >= field->cols) return;
     if (flags[row][col] != 0 || state[row][col]) return true;
     if (cells[row][col]) return false;     // You lose
     state[row][col] = true;
