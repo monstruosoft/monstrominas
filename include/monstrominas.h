@@ -8,10 +8,12 @@
 
 
 typedef struct MINESWEEPER_FIELD {
-    bool cells[MINESWEEPER_ROWS][MINESWEEPER_COLUMNS];
-    int hints[MINESWEEPER_ROWS][MINESWEEPER_COLUMNS];
-    bool state[MINESWEEPER_ROWS][MINESWEEPER_COLUMNS];
-    int flags[MINESWEEPER_ROWS][MINESWEEPER_COLUMNS];
+    bool *cells;
+    int *hints;
+    bool *state;
+    int *flags;
+    int rows;
+    int cols;
     int cell_count;
     bool complete;
 } MINESWEEPER_FIELD;
@@ -19,7 +21,7 @@ typedef struct MINESWEEPER_FIELD {
 
 
 void minesweeper_field_print(MINESWEEPER_FIELD *field);
-MINESWEEPER_FIELD *minesweeper_field_create();
+MINESWEEPER_FIELD *minesweeper_field_create(int rows, int cols);
 void minesweeper_field_uncover(MINESWEEPER_FIELD *field, int row, int col);
 bool minesweeper_event_uncover(MINESWEEPER_FIELD *field, int row, int col);
 void minesweeper_event_flag(MINESWEEPER_FIELD *field, int row, int col);

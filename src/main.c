@@ -60,14 +60,14 @@ ALLEGRO_DISPLAY *display = NULL;
 ALLEGRO_TIMER *timer = NULL;
 ALLEGRO_FONT *font = NULL;
 ALLEGRO_EVENT event;
-ALLEGRO_PATH *bg[MAX_BACKGROUNDS] = {0};
-ALLEGRO_BITMAP *background = NULL;
 
 bool game_over = false;
 bool redraw = true;
 
 // Game global variables
 GAME_ACTOR *actor = NULL;
+ALLEGRO_PATH *bg[MAX_BACKGROUNDS] = {0};
+ALLEGRO_BITMAP *background = NULL;
 
 
 
@@ -81,7 +81,7 @@ void minesweeper_field_draw(MINESWEEPER_FIELD *field) {
         for (int col = 0; col < MINESWEEPER_COLUMNS; col++) {
             int x1 = col * MINESWEEPER_CELL_SIZE, y1 = row * MINESWEEPER_CELL_SIZE;
             int x2 = x1 + MINESWEEPER_CELL_SIZE, y2 = y1 + MINESWEEPER_CELL_SIZE;
-            if (!field->state[row][col]) {
+            if (!((bool (*)[field->cols])field->state)[row][col]) {
                 al_draw_filled_rectangle(x1, y1, x2, y2, al_color_name("darkgray"));
                 al_draw_rectangle(x1, y1, x2 - 1, y2 - 1, black, 1);
                 al_draw_line(x1, y1, x2, y1, white, 1);
@@ -91,11 +91,11 @@ void minesweeper_field_draw(MINESWEEPER_FIELD *field) {
                 // al_draw_filled_rectangle(x1, y1, x2, y2, al_color_name("lightgray"));
                 al_draw_rectangle(x1, y1, x2, y2, al_map_rgba(64, 64, 64, 128), 1);
             }
-            if (field->hints[row][col] != 0 && field->state[row][col])
-                al_draw_textf(font, black, x1 + MINESWEEPER_COLUMNS / 2, y1 + (MINESWEEPER_CELL_SIZE - font_height), ALLEGRO_ALIGN_CENTER, "%d", field->hints[row][col]);
+            if (((int (*)[field->cols])field->hints)[row][col] != 0 && ((bool (*)[field->cols])field->state)[row][col])
+                al_draw_textf(font, black, x1 + MINESWEEPER_COLUMNS / 2, y1 + (MINESWEEPER_CELL_SIZE - font_height), ALLEGRO_ALIGN_CENTER, "%d", ((int (*)[field->cols])field->hints)[row][col]);
 
-            if (field->flags[row][col] != 0)
-                al_draw_filled_rectangle(x1, y1, x2, y2, al_map_rgba(255, 92 * field->flags[row][col], 0, 255));
+            if (((int (*)[field->cols])field->flags)[row][col] != 0)
+                al_draw_filled_rectangle(x1, y1, x2, y2, al_map_rgba(255, 92 * ((int (*)[field->cols])field->flags)[row][col], 0, 255));
             if (field->complete)
                 al_draw_text(font, black, 50, 50, 0, "WIN!!!!1");
         }
@@ -120,7 +120,7 @@ void minesweeper_field_logic(MINESWEEPER_FIELD *field, ALLEGRO_EVENT *event) {
 
 GAME_ACTOR *minesweeper_field_actor() {
     GAME_ACTOR *actor = game_actor_create();
-    actor->data = minesweeper_field_create();
+    actor->data = minesweeper_field_create(MINESWEEPER_ROWS, MINESWEEPER_COLUMNS);
     actor->print = minesweeper_field_print;
     actor->draw = minesweeper_field_draw;
     actor->logic = minesweeper_field_logic;
@@ -262,10 +262,12 @@ void initialization() {
     assert(al_close_directory(dir));
 
 // Randomly choose background images from those available
-    int choice = rand() % count;
-    printf("Choosing background %d: %s\n", choice, al_path_cstr(bg[choice], '/'));
-    background = al_load_bitmap(al_path_cstr(bg[choice], '/'));
-    assert(background);
+    if (count > 0) {
+        int choice = rand() % count;
+        printf("Choosing background %d: %s\n", choice, al_path_cstr(bg[choice], '/'));
+        background = al_load_bitmap(al_path_cstr(bg[choice], '/'));
+        assert(background);
+    }
 }
 
 
@@ -273,7 +275,7 @@ void initialization() {
 /*
  * Game loop.
  */
-int main() {
+int main(int argc, char **argv) {
     initialization();
     
     while (!game_over) {
