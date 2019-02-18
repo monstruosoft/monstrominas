@@ -72,7 +72,7 @@ bool redraw = true;
 // Game global variables
 GAME_ACTOR *actor = NULL;
 ALLEGRO_PATH *bg[MAX_BACKGROUNDS] = {0};
-ALLEGRO_BITMAP *background = NULL;
+ALLEGRO_BITMAP *background = NULL, *warning = NULL, *mine = NULL;
 
 
 
@@ -99,8 +99,13 @@ void minesweeper_field_draw(MINESWEEPER_FIELD *field) {
             if (((int (*)[field->cols])field->hints)[row][col] != 0 && ((bool (*)[field->cols])field->state)[row][col])
                 al_draw_textf(font, black, x1 + field->cols / 2, y1 + (field->cell_size - font_height), ALLEGRO_ALIGN_CENTER, "%d", ((int (*)[field->cols])field->hints)[row][col]);
 
-            if (((int (*)[field->cols])field->flags)[row][col] != 0)
-                al_draw_filled_rectangle(x1, y1, x2, y2, al_map_rgba(255, 92 * ((int (*)[field->cols])field->flags)[row][col], 0, 255));
+            if (((int (*)[field->cols])field->flags)[row][col] != 0) {
+                if (((int (*)[field->cols])field->flags)[row][col] == MINESWEEPER_WARNING)
+                    al_draw_scaled_bitmap(warning, 0, 0, al_get_bitmap_width(warning), al_get_bitmap_height(warning), x1, y1, field->cell_size , field->cell_size, 0);
+                else if (((int (*)[field->cols])field->flags)[row][col] == MINESWEEPER_DANGER)
+                    al_draw_scaled_bitmap(mine, 0, 0, al_get_bitmap_width(mine), al_get_bitmap_height(mine), x1, y1, field->cell_size, field->cell_size, 0);
+
+            }
             if (field->complete)
                 al_draw_text(font, black, 50, 50, 0, "WIN!!!!1");
         }
@@ -262,6 +267,9 @@ void initialization(int rows, int cols) {
     int y_size = field->rows * field->cell_size;
     field->x_offset = SCR_WIDTH / 2 - x_size / 2;
     field->y_offset = SCR_HEIGHT / 2 - y_size / 2;
+    warning = al_load_bitmap("data/warning.png");
+    mine = al_load_bitmap("data/mine.png");
+    assert(warning && mine);
 
 // Find potential background images
     int count = 0;
