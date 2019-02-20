@@ -53,11 +53,15 @@
 
 #define SCR_WIDTH           800
 #define SCR_HEIGHT          600
-#define MAX_ROWS             36
-#define MAX_COLS             50
+#define MAX_ROWS             30
+#define MAX_COLS             40
 #define MAX_BACKGROUNDS      10
 
 
+
+// support.c function prototypes
+ALLEGRO_BITMAP *bmputils_transpose_blur(ALLEGRO_BITMAP *bmp, int radius);
+ALLEGRO_BITMAP *bmputils_box_blur(ALLEGRO_BITMAP *bmp, int radius);
 
 // Allegro global variables
 ALLEGRO_EVENT_QUEUE *events = NULL;
@@ -72,7 +76,7 @@ bool redraw = true;
 // Game global variables
 GAME_ACTOR *actor = NULL;
 ALLEGRO_PATH *bg[MAX_BACKGROUNDS] = {0};
-ALLEGRO_BITMAP *background = NULL, *warning = NULL, *mine = NULL;
+ALLEGRO_BITMAP *background = NULL, *threshold = NULL, *warning = NULL, *mine = NULL;
 
 
 
@@ -97,7 +101,7 @@ void minesweeper_field_draw(MINESWEEPER_FIELD *field) {
                 al_draw_rectangle(x1, y1, x2, y2, al_map_rgba(64, 64, 64, 128), 1);
             }
             if (((int (*)[field->cols])field->hints)[row][col] != 0 && ((bool (*)[field->cols])field->state)[row][col])
-                al_draw_textf(font, black, x1 + field->cols / 2, y1 + (field->cell_size - font_height), ALLEGRO_ALIGN_CENTER, "%d", ((int (*)[field->cols])field->hints)[row][col]);
+                al_draw_textf(font, black, x1 + field->cell_size / 2, y1 + (field->cell_size - font_height), ALLEGRO_ALIGN_CENTER, "%d", ((int (*)[field->cols])field->hints)[row][col]);
 
             if (((int (*)[field->cols])field->flags)[row][col] != 0) {
                 if (((int (*)[field->cols])field->flags)[row][col] == MINESWEEPER_WARNING)
@@ -215,12 +219,13 @@ void update() {
         h2 = field->cell_size * field->rows,
         sx = w / 2 - w2 / scalex / 2,                        // Bitmap region
         sy = h / 2 - h2 / scaley / 2;
-    al_draw_tinted_scaled_rotated_bitmap_region(background, 0, 0, w, h, al_map_rgba(32, 32, 32, 32), 0, 0, 0, 0, scalex, scaley, 0, 0);
+    al_draw_tinted_scaled_rotated_bitmap_region(threshold, 0, 0, w, h, al_map_rgba(255, 255, 255, 255), 0, 0, 0, 0, scalex, scaley, 0, 0);
     al_draw_filled_rectangle(field->x_offset, field->y_offset, field->x_offset + w2, field->y_offset + h2, al_map_rgb(255, 255, 255));
     // al_draw_tinted_scaled_bitmap(background, al_map_rgba(32, 32, 32, 32), 0, 0, w, h, field->x_offset, field->y_offset, w, h, 0);
     al_draw_tinted_scaled_rotated_bitmap_region(background, sx, sy, w2 / scalex, h2 / scaley, al_map_rgba(128, 128, 128, 128), 0, 0, SCR_WIDTH / 2 - w2 / 2, SCR_HEIGHT / 2 - h2 / 2, scalex, scaley, 0, 0);
     game_actor_draw(actor);
 }
+
 
 
 /*
@@ -295,8 +300,11 @@ void initialization(int rows, int cols) {
         int choice = rand() % count;
         printf("Choosing background %d: %s\n", choice, al_path_cstr(bg[choice], '/'));
         background = al_load_bitmap(al_path_cstr(bg[choice], '/'));
+        // threshold = al_clone_bitmap(background);
         assert(background);
     }
+    threshold = bmputils_box_blur(background, 25);
+    assert(threshold);
 }
 
 
