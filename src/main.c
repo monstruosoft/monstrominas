@@ -209,7 +209,7 @@ void logic(ALLEGRO_EVENT *event) {
  * Screen update.
  */
 void update() {
-    al_clear_to_color(al_map_rgb(0, 128, 128));
+    al_clear_to_color(al_map_rgb(255, 255, 255));
     MINESWEEPER_FIELD *field = actor->data;
     int w = al_get_bitmap_width(background), 
         h = al_get_bitmap_height(background);
@@ -219,7 +219,7 @@ void update() {
         h2 = field->cell_size * field->rows,
         sx = w / 2 - w2 / scalex / 2,                        // Bitmap region
         sy = h / 2 - h2 / scaley / 2;
-    al_draw_tinted_scaled_rotated_bitmap_region(threshold, 0, 0, w, h, al_map_rgba(255, 255, 255, 255), 0, 0, 0, 0, scalex, scaley, 0, 0);
+    al_draw_tinted_scaled_rotated_bitmap_region(threshold, 0, 0, w, h, al_map_rgba(192, 192, 192, 192), 0, 0, 0, 0, scalex, scaley, 0, 0);
     al_draw_filled_rectangle(field->x_offset, field->y_offset, field->x_offset + w2, field->y_offset + h2, al_map_rgb(255, 255, 255));
     // al_draw_tinted_scaled_bitmap(background, al_map_rgba(32, 32, 32, 32), 0, 0, w, h, field->x_offset, field->y_offset, w, h, 0);
     al_draw_tinted_scaled_rotated_bitmap_region(background, sx, sy, w2 / scalex, h2 / scaley, al_map_rgba(128, 128, 128, 128), 0, 0, SCR_WIDTH / 2 - w2 / 2, SCR_HEIGHT / 2 - h2 / 2, scalex, scaley, 0, 0);
@@ -302,6 +302,12 @@ void initialization(int rows, int cols) {
         background = al_load_bitmap(al_path_cstr(bg[choice], '/'));
         // threshold = al_clone_bitmap(background);
         assert(background);
+    }
+    else {
+        background = al_create_bitmap(2, 2);
+        al_set_target_bitmap(background);
+        al_clear_to_color(al_map_rgb(192, 192, 192));
+        al_set_target_backbuffer(display);
     }
     threshold = bmputils_box_blur(background, 25);
     assert(threshold);
