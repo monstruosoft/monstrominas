@@ -83,12 +83,13 @@ void minesweeper_field_uncover(MINESWEEPER_FIELD *field, int row, int col) {
     bool (*cells)[field->cols] = (bool (*)[])field->cells;
     int (*hints)[field->cols] = (int (*)[])field->hints;
     bool (*state)[field->cols] = (bool (*)[])field->state;
+    int (*flags)[field->cols] = (int (*)[])field->flags;
 
     for (int j = row - 1; j <= row + 1; j++) {
         if (j < 0 || j >= field->rows) continue;
         for (int i = col - 1; i <= col + 1; i++) {
-            if (i < 0 || i >= field->cols || state[j][i]) continue;
-            if (!cells[j][i]) {
+            if (i < 0 || i >= field->cols || state[j][i] || flags[j][i]) continue;
+            if (!cells[j][i] && !flags[j][i]) {
                 state[j][i] = true;
                 field->cell_count--;
             }
