@@ -79,6 +79,16 @@ MINESWEEPER_FIELD *minesweeper_field_create(int rows, int cols) {
 
 
 
+void minesweeper_field_destroy(MINESWEEPER_FIELD *field) {
+    free(field->cells);
+    free(field->hints);
+    free(field->state);
+    free(field->flags);
+    free(field);
+}
+
+
+
 void minesweeper_field_uncover(MINESWEEPER_FIELD *field, int row, int col) {
     bool (*cells)[field->cols] = (bool (*)[])field->cells;
     int (*hints)[field->cols] = (int (*)[])field->hints;

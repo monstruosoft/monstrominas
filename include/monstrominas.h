@@ -21,15 +21,13 @@ typedef struct MINESWEEPER_FIELD {
     int cell_size;
     int mine_count;
     bool complete;
-// Implementation specific fields
-    int x_offset;
-    int y_offset;
 } MINESWEEPER_FIELD;
 
 
 
 void minesweeper_field_print(MINESWEEPER_FIELD *field);
 MINESWEEPER_FIELD *minesweeper_field_create(int rows, int cols);
+void minesweeper_field_destroy(MINESWEEPER_FIELD *field);
 void minesweeper_field_uncover(MINESWEEPER_FIELD *field, int row, int col);
 bool minesweeper_event_uncover(MINESWEEPER_FIELD *field, int row, int col);
 void minesweeper_event_flag(MINESWEEPER_FIELD *field, int row, int col);
