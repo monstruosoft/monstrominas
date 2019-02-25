@@ -117,8 +117,6 @@ void minesweeper_field_draw(GAME_ACTOR *actor) {
                         al_draw_scaled_bitmap(flag, 0, 0, al_get_bitmap_width(flag), al_get_bitmap_height(flag), x1, y1, field->cell_size, field->cell_size, 0);
 
                 }
-                if (field->complete)
-                    al_draw_text(font, black, 50, 50, 0, "WIN!!!!1");
             }
             else if (!field->complete) {
                 if (((bool (*)[field->cols])field->cells)[row][col])
@@ -131,6 +129,9 @@ void minesweeper_field_draw(GAME_ACTOR *actor) {
         float y = game_rows / 2. * game_cell_size;
         al_draw_rectangle(SCR_WIDTH / 2 - x, SCR_HEIGHT / 2 - y, SCR_WIDTH / 2 + x, SCR_HEIGHT / 2 + y, al_map_rgb(255, 0, 0), 3);
     }
+
+    if (field->complete)
+        al_draw_text(font, black, 50, 50, 0, "WIN!!!!1");
 }
 
 
@@ -143,7 +144,9 @@ void minesweeper_field_logic(GAME_ACTOR *actor, ALLEGRO_EVENT *event) {
             int row = (event->mouse.y - actor->y) / field->cell_size;
             int col = (event->mouse.x - actor->x) / field->cell_size;
             if (event->type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN && event->mouse.button == 1) {
-                game_over = !minesweeper_event_uncover(field, row, col);
+                if (field->move_count == 0)
+                    minesweeper_field_reset(field, row, col);
+                game_over = !minesweeper_event_uncover(field, row, col) || field->complete;
             }
             else if (event->type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN && event->mouse.button == 2) {
                 minesweeper_event_flag(field, row, col);

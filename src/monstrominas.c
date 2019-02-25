@@ -39,7 +39,30 @@ MINESWEEPER_FIELD *minesweeper_field_create(int rows, int cols) {
     field->hints = calloc(rows * cols, sizeof(int));
     field->state = calloc(rows * cols, sizeof(bool));
     field->flags = calloc(rows * cols, sizeof(int));
+    field->cell_count = field->rows * field->cols;
+    field->cell_size = MINESWEEPER_CELL_SIZE;
+    field->move_count = 0;
     assert(field->cells && field->hints && field->state && field->flags);
+
+// minesweeper_field_reset() is called here in case the calling function 
+// doesn't reset the field after the player's first move.
+    minesweeper_field_reset(field, rand() % rows, rand() % cols);
+    printf("Created minesweeper field: %dx%d cells, %d mines\n", field->rows, field->cols, field->mine_count);
+
+    return field;
+}
+
+
+
+/**
+ * Resets a game field taking care not to place a mine at (row, col). 
+ * This is useful for a new game's first move.
+ */
+void minesweeper_field_reset(MINESWEEPER_FIELD *field, int row, int col) {
+    memset(field->cells, 0, field->rows * field->cols * sizeof(bool));
+    memset(field->hints, 0, field->rows * field->cols * sizeof(int));
+    memset(field->state, 0, field->rows * field->cols * sizeof(bool));
+    memset(field->flags, 0, field->rows * field->cols * sizeof(int));
 
     int mine_count = 0;
     bool (*cells)[field->cols] = (bool (*)[])field->cells;
@@ -47,12 +70,14 @@ MINESWEEPER_FIELD *minesweeper_field_create(int rows, int cols) {
     float ratio = MINESWEEPER_MIN_RATIO + ((field->rows * field->cols - 100) / 480.) * (MINESWEEPER_MAX_RATIO - MINESWEEPER_MIN_RATIO);
     ratio = ratio > MINESWEEPER_MAX_RATIO ? MINESWEEPER_MAX_RATIO : ratio;
     int mines = field->rows * field->cols * ratio;
+    field->mine_count = mines;
+    printf("Field reset: %dx%d cells, %d mines (%f mine ratio)", field->rows, field->cols, field->mine_count, ratio);
 
     while (mine_count < mines) {
-        int row = rand() % field->rows;
-        int column = rand() % field->cols;
-        if (cells[row][column]) continue;
-        cells[row][column] = true;
+        int candidate_row = rand() % field->rows;
+        int candidate_column = rand() % field->cols;
+        if (cells[candidate_row][candidate_column] || abs(row - candidate_row) < 1 || abs(col - candidate_column) < 1) continue;
+        cells[candidate_row][candidate_column] = true;
         mine_count++;
     }
 
@@ -68,13 +93,6 @@ MINESWEEPER_FIELD *minesweeper_field_create(int rows, int cols) {
                 }
             }
         }
-
-    field->cell_count = field->rows * field->cols;
-    field->mine_count = mines;
-    field->cell_size = MINESWEEPER_CELL_SIZE;
-    printf("Created minesweeper field: %dx%d cells, %d mines (%f mine ratio)\n", field->rows, field->cols, field->mine_count, ratio);
-
-    return field;
 }
 
 
@@ -122,8 +140,8 @@ bool minesweeper_event_uncover(MINESWEEPER_FIELD *field, int row, int col) {
     bool (*state)[field->cols] = (bool (*)[])field->state;
     int (*flags)[field->cols] = (int (*)[])field->flags;
 
-    if (row < 0 || row >= field->rows) return;
-    if (col < 0 || col >= field->cols) return;
+    if (row < 0 || row >= field->rows) return true;
+    if (col < 0 || col >= field->cols) return true;
     if (flags[row][col] != 0 || state[row][col]) return true;
     if (cells[row][col]) return false;     // You lose
     state[row][col] = true;
@@ -132,6 +150,7 @@ bool minesweeper_event_uncover(MINESWEEPER_FIELD *field, int row, int col) {
         minesweeper_field_uncover(field, row, col);
     if (field->cell_count <= field->mine_count)
         field->complete = true;
+    field->move_count++;
 
     return true;
 }
