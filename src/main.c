@@ -42,12 +42,18 @@
 #include <allegro5/allegro_font.h>
 #include <allegro5/allegro_color.h>
 #include <allegro5/allegro_image.h>
+#include <allegro5/allegro_memfile.h>
 #include <allegro5/allegro_primitives.h>
 #ifdef __ANDROID__
 #include <allegro5/allegro_android.h>
 #endif
 #include "game.h"
 #include "monstrominas.h"
+// Embedded resources
+#include "resources_flag.h"
+#include "resources_mine.h"
+#include "resources_font.h"
+#include "resources_warning.h"
 
 
 
@@ -80,6 +86,7 @@ int max_rows = SCR_HEIGHT / 2 / MINESWEEPER_CELL_SIZE,          // Default vaule
 int game_rows = MINESWEEPER_ROWS, game_cols = MINESWEEPER_COLUMNS;
 int game_cell_size = MINESWEEPER_CELL_SIZE;
 GAME_ACTOR *game_actor = NULL;
+ALLEGRO_FILE *font_memfile = NULL;
 ALLEGRO_PATH *bg[MAX_BACKGROUNDS] = {0};
 ALLEGRO_BITMAP *background = NULL, *threshold = NULL, *warning = NULL, *mine = NULL, *flag = NULL;
 
@@ -186,7 +193,8 @@ void minesweeper_field_logic(GAME_ACTOR *actor, ALLEGRO_EVENT *event) {
             else if (event->type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN && event->mouse.button == 1) {
             // Reset game actor with a new minesweeper field
                 al_destroy_font(font);
-                font = al_load_ttf_font("data/ZillaSlab-Bold.ttf", game_cell_size, 0);
+                font_memfile = al_open_memfile(ZillaSlab_Bold_ttf, ZillaSlab_Bold_ttf_len, "r");
+                font = al_load_ttf_font_f(font_memfile, NULL, game_cell_size, 0);
                 game_actor_destroy(game_actor);
                 game_actor = minesweeper_field_actor(game_rows, game_cols);
                 game_over = false;
@@ -308,6 +316,11 @@ void update() {
 
 
 
+bool load_embedded_image() {
+}
+
+
+
 /*
  * Game initialization.
  */
@@ -329,7 +342,8 @@ void initialization(int rows, int cols) {
     printf("Android version: %s", al_android_get_os_version());
     al_android_set_apk_file_interface();
 #endif
-    font = al_load_ttf_font("data/ZillaSlab-Bold.ttf", MINESWEEPER_CELL_SIZE, 0);
+    font_memfile = al_open_memfile(ZillaSlab_Bold_ttf, ZillaSlab_Bold_ttf_len, "r");
+    font = al_load_ttf_font_f(font_memfile, NULL, MINESWEEPER_CELL_SIZE, 0);
     assert(font);
     events = al_create_event_queue();
     assert(events);
@@ -343,9 +357,19 @@ void initialization(int rows, int cols) {
     srand(time(NULL));
 
 // Game initialization
-    warning = al_load_bitmap("data/warning.png");
-    flag = al_load_bitmap("data/flag.png");
-    mine = al_load_bitmap("data/mine.png");
+    ALLEGRO_FILE *memfile = NULL;
+    memfile = al_open_memfile(flag_png, flag_png_len, "r");
+    flag = al_load_bitmap_f(memfile, ".png");
+    al_fclose(memfile);
+
+    memfile = al_open_memfile(warning_png, warning_png_len, "r");
+    warning = al_load_bitmap_f(memfile, ".png");
+    al_fclose(memfile);
+
+    memfile = al_open_memfile(mine_png, mine_png_len, "r");
+    mine = al_load_bitmap_f(memfile, ".png");
+    al_fclose(memfile);    
+
     assert(warning && mine && flag);
 
     game_actor = minesweeper_field_actor(game_rows, game_cols);
