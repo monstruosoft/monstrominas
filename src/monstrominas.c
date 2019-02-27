@@ -46,7 +46,7 @@ MINESWEEPER_FIELD *minesweeper_field_create(int rows, int cols) {
 
 // minesweeper_field_reset() is called here in case the calling function 
 // doesn't reset the field after the player's first move.
-    minesweeper_field_reset(field, rand() % rows, rand() % cols);
+    minesweeper_field_reset(field, rand() % rows, rand() % cols, true);
     printf("Created minesweeper field: %dx%d cells, %d mines\n", field->rows, field->cols, field->mine_count);
 
     return field;
@@ -58,11 +58,12 @@ MINESWEEPER_FIELD *minesweeper_field_create(int rows, int cols) {
  * Resets a game field taking care not to place a mine at (row, col). 
  * This is useful for a new game's first move.
  */
-void minesweeper_field_reset(MINESWEEPER_FIELD *field, int row, int col) {
+void minesweeper_field_reset(MINESWEEPER_FIELD *field, int row, int col, bool reset_flags) {
     memset(field->cells, 0, field->rows * field->cols * sizeof(bool));
     memset(field->hints, 0, field->rows * field->cols * sizeof(int));
     memset(field->state, 0, field->rows * field->cols * sizeof(bool));
-    memset(field->flags, 0, field->rows * field->cols * sizeof(int));
+    if (reset_flags)
+        memset(field->flags, 0, field->rows * field->cols * sizeof(int));
 
     int mine_count = 0;
     bool (*cells)[field->cols] = (bool (*)[])field->cells;
