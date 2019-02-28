@@ -114,6 +114,9 @@ void minesweeper_field_uncover(MINESWEEPER_FIELD *field, int row, int col) {
     bool (*state)[field->cols] = (bool (*)[])field->state;
     int (*flags)[field->cols] = (int (*)[])field->flags;
 
+    if (row < 0 || row >= field->rows) return;
+    if (col < 0 || col >= field->cols) return;
+
     for (int j = row - 1; j <= row + 1; j++) {
         if (j < 0 || j >= field->rows) continue;
         for (int i = col - 1; i <= col + 1; i++) {
@@ -164,6 +167,9 @@ bool minesweeper_event_uncover(MINESWEEPER_FIELD *field, int row, int col) {
 void minesweeper_event_flag(MINESWEEPER_FIELD *field, int row, int col) {
     int (*flags)[field->cols] = (int (*)[])field->flags;
     bool (*state)[field->cols] = (bool (*)[])field->state;
+
+    if (row < 0 || row >= field->rows) return;
+    if (col < 0 || col >= field->cols) return;
     if (!state[row][col])
         flags[row][col] = (flags[row][col] + 1) % 3;  
 }

@@ -324,7 +324,7 @@ bool load_embedded_image() {
 /*
  * Game initialization.
  */
-void initialization(int rows, int cols) {
+void initialization(int argc, char **argv) {
 // Allegro initialization
     assert(al_init());
     assert(al_install_keyboard());
@@ -377,22 +377,24 @@ void initialization(int rows, int cols) {
 
 // Find potential background images
     int count = 0;
-    ALLEGRO_FS_ENTRY *dir = al_create_fs_entry("data");
-    assert(al_fs_entry_exists(dir));
-    assert(al_open_directory(dir));
-    ALLEGRO_FS_ENTRY *file = al_read_directory(dir);
-    printf("Available background images: \n");
-    while (file != NULL && count < MAX_BACKGROUNDS) {
-        ALLEGRO_PATH *path = al_create_path(al_get_fs_entry_name(file));
-        assert(path);
-        if (strcmp(al_get_path_extension(path), ".jpg") == 0) {
-            printf("file: %s\n", al_get_fs_entry_name(file));
-            bg[count++] = path;
+    char *bg_path = "data";
+    if (argc > 1) bg_path = argv[1];
+    ALLEGRO_FS_ENTRY *dir = al_create_fs_entry(bg_path);
+    if (al_fs_entry_exists(dir) && al_open_directory(dir)) {
+        ALLEGRO_FS_ENTRY *file = al_read_directory(dir);
+        printf("Available background images: \n");
+        while (file != NULL && count < MAX_BACKGROUNDS) {
+            ALLEGRO_PATH *path = al_create_path(al_get_fs_entry_name(file));
+            assert(path);
+            if (strcmp(al_get_path_extension(path), ".jpg") == 0) {
+                printf("file: %s\n", al_get_fs_entry_name(file));
+                bg[count++] = path;
+            }
+            else al_destroy_path(path);
+            file = al_read_directory(dir);
         }
-        else al_destroy_path(path);
-        file = al_read_directory(dir);
+        assert(al_close_directory(dir));
     }
-    assert(al_close_directory(dir));
 
 // Randomly choose background images from those available
     if (count > 0) {
@@ -419,12 +421,7 @@ void initialization(int rows, int cols) {
  */
 int main(int argc, char **argv) {
 // Parse command line arguments
-    int rows = MINESWEEPER_ROWS, cols = MINESWEEPER_COLUMNS;
-    if (argc > 2) {
-        rows = strtol(argv[2], NULL, 10);
-        cols = strtol(argv[1], NULL, 10);
-    }
-    initialization(rows, cols);
+    initialization(argc, argv);
     
     while (!quit) {
         al_wait_for_event(events, &event);
