@@ -20,6 +20,7 @@ typedef struct MINESWEEPER_FIELD {
     int cell_count;
     int cell_size;
     int mine_count;
+    int flags_count;
     bool complete;
     int move_count;
 } MINESWEEPER_FIELD;

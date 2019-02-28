@@ -60,6 +60,8 @@
 #define SCR_WIDTH           800
 #define SCR_HEIGHT          600
 #define MAX_BACKGROUNDS      10
+#define MAX_ALPHA           320
+#define GAME_FPS              5
 
 
 
@@ -85,6 +87,7 @@ int max_rows = SCR_HEIGHT / 2 / MINESWEEPER_CELL_SIZE,          // Default vaule
     max_cols = SCR_WIDTH / 2 / MINESWEEPER_CELL_SIZE;
 int game_rows = MINESWEEPER_ROWS, game_cols = MINESWEEPER_COLUMNS;
 int game_cell_size = MINESWEEPER_CELL_SIZE;
+int info_alpha = MAX_ALPHA;                                     // Crappy workaround
 GAME_ACTOR *game_actor = NULL;
 ALLEGRO_FILE *font_memfile = NULL;
 ALLEGRO_PATH *bg[MAX_BACKGROUNDS] = {0};
@@ -97,6 +100,9 @@ void minesweeper_field_draw(GAME_ACTOR *actor) {
     ALLEGRO_COLOR color = al_color_name("lightgray");
     ALLEGRO_COLOR black = al_color_name("black");
     ALLEGRO_COLOR white = al_color_name("white");
+    int alpha = info_alpha - 100 < 0 ? 0 : info_alpha - 100;
+    ALLEGRO_COLOR transparency = al_map_rgba(0, 0, 0, alpha);
+    ALLEGRO_COLOR hint = al_map_rgba(alpha, alpha, 160 * alpha / 255, alpha);
     int font_height = al_get_font_line_height(font);
 
     for (int row = 0; row < field->rows; row++)
@@ -137,10 +143,21 @@ void minesweeper_field_draw(GAME_ACTOR *actor) {
                 }
         }
         al_draw_rectangle(SCR_WIDTH / 2 - x, SCR_HEIGHT / 2 - y, SCR_WIDTH / 2 + x, SCR_HEIGHT / 2 + y, al_map_rgb(255, 0, 0), 3);
+
+        al_draw_filled_rectangle(10, 10, SCR_WIDTH - 10, font_height * 3 + 20, hint);
+        al_draw_rectangle(10, 10, SCR_WIDTH - 10, font_height * 3 + 20, transparency, 2);
+        al_draw_multiline_textf(font, transparency, SCR_WIDTH / 2, 15, SCR_WIDTH, font_height, ALLEGRO_ALIGN_CENTER, "Use the mouse WHEEL to change the minefield size.\n"
+                "Click the LEFT mouse button to start a new game. Press ESCAPE to quit.\n"
+                "New size: %dx%d", game_cols, game_rows);
+    }
+    else {
+        al_draw_filled_rectangle(10, 10, SCR_WIDTH - 10, font_height * 2 + 20, hint);
+        al_draw_rectangle(10, 10, SCR_WIDTH - 10, font_height * 2 + 20, transparency, 2);
+        al_draw_multiline_textf(font, transparency, SCR_WIDTH / 2, 15, SCR_WIDTH, font_height, ALLEGRO_ALIGN_CENTER, "Mines: %d\nTime: %d", field->mine_count - field->flags_count, al_get_timer_count(timer) / GAME_FPS);
     }
 
     if (field->complete)
-        al_draw_text(font, black, 50, 50, 0, "WIN!!!!1");
+        al_draw_text(font, black, SCR_WIDTH / 2, 150, ALLEGRO_ALIGN_CENTER, "YOU WIN!!!!1");
 }
 
 
@@ -156,10 +173,14 @@ void minesweeper_field_logic(GAME_ACTOR *actor, ALLEGRO_EVENT *event) {
                 if (field->move_count == 0)
                     minesweeper_field_reset(field, row, col, false);
                 game_over = !minesweeper_event_uncover(field, row, col) || field->complete;
+                redraw = true;
             }
             else if (event->type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN && event->mouse.button == 2) {
                 minesweeper_event_flag(field, row, col);
+                redraw = true;
             }
+
+            info_alpha = event->mouse.y < MAX_ALPHA ? event->mouse.y : MAX_ALPHA;
         }
     }
     else {
@@ -177,7 +198,7 @@ void minesweeper_field_logic(GAME_ACTOR *actor, ALLEGRO_EVENT *event) {
                 game_rows = game_rows < MINESWEEPER_ROWS ? MINESWEEPER_ROWS : game_rows;
                 if (event->mouse.dz > 0 && game_cols > max_cols && game_rows > max_rows) {
                     if (game_cols * game_cell_size > SCR_WIDTH || game_rows * game_cell_size > SCR_HEIGHT)
-                        game_cell_size -= 4;
+                        game_cell_size -= game_cell_size > 12 ? 4 : 0;
                 }
                 else {
                     int t = game_cell_size + 4;     // Candidate size
@@ -189,6 +210,7 @@ void minesweeper_field_logic(GAME_ACTOR *actor, ALLEGRO_EVENT *event) {
                 game_cols = game_cols > max_cols ? max_cols : game_cols;
                 game_rows = game_rows > max_rows ? max_rows : game_rows;
                 printf("New field size: %dx%d, cell size: %d\n", game_cols, game_rows, game_cell_size);
+                redraw = true;
             }
             else if (event->type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN && event->mouse.button == 1) {
             // Reset game actor with a new minesweeper field
@@ -197,9 +219,13 @@ void minesweeper_field_logic(GAME_ACTOR *actor, ALLEGRO_EVENT *event) {
                 font = al_load_ttf_font_f(font_memfile, NULL, game_cell_size, 0);
                 game_actor_destroy(game_actor);
                 game_actor = minesweeper_field_actor(game_rows, game_cols);
+                al_set_timer_count(timer, 0);
                 game_over = false;
+                redraw = true;
             }
         }
+
+        info_alpha = event->mouse.y < MAX_ALPHA ? event->mouse.y : MAX_ALPHA;
     }
 }
 
@@ -347,7 +373,7 @@ void initialization(int argc, char **argv) {
     assert(font);
     events = al_create_event_queue();
     assert(events);
-    timer = al_create_timer(ALLEGRO_BPS_TO_SECS(30));
+    timer = al_create_timer(ALLEGRO_BPS_TO_SECS(GAME_FPS));
     assert(timer);
     al_start_timer(timer);
     al_register_event_source(events, al_get_keyboard_event_source());

@@ -170,8 +170,13 @@ void minesweeper_event_flag(MINESWEEPER_FIELD *field, int row, int col) {
 
     if (row < 0 || row >= field->rows) return;
     if (col < 0 || col >= field->cols) return;
-    if (!state[row][col])
-        flags[row][col] = (flags[row][col] + 1) % 3;  
+    if (!state[row][col]) {
+        flags[row][col] = (flags[row][col] + 1) % 3;
+        if (flags[row][col] == MINESWEEPER_DANGER)
+            field->flags_count++;
+        else if (flags[row][col] == MINESWEEPER_WARNING)
+            field->flags_count--;
+    }
 }
 
 
