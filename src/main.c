@@ -42,6 +42,7 @@
 #include <allegro5/allegro_font.h>
 #include <allegro5/allegro_color.h>
 #include <allegro5/allegro_image.h>
+#include <allegro5/allegro_opengl.h>
 #include <allegro5/allegro_memfile.h>
 #include <allegro5/allegro_primitives.h>
 #ifdef __ANDROID__
@@ -275,7 +276,7 @@ void game_actor_draw(GAME_ACTOR *actor) {
 }
 
 void game_actor_logic(GAME_ACTOR *actor, ALLEGRO_EVENT *event) {
-    actor->logic(actor);
+    actor->logic(actor, event);
 }
 
 
@@ -355,7 +356,7 @@ void initialization(int argc, char **argv) {
     assert(al_init());
     assert(al_install_keyboard());
     assert(al_install_mouse());
-    al_set_new_display_flags(ALLEGRO_WINDOWED);
+    al_set_new_display_flags(ALLEGRO_OPENGL | ALLEGRO_WINDOWED);
     al_set_new_window_title("Monstrominas by monstruosoft");
     display = al_create_display(SCR_WIDTH, SCR_HEIGHT);
     assert(display);
