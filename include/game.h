@@ -1,5 +1,5 @@
 /**
- * @file monstrominas.h
+ * @file game.h
  * 
  * @section LICENSE License
  * 
@@ -30,42 +30,52 @@
  * 
  * @section DESCRIPTION Description
  * 
- * Typedefs and function prototypes for monstrominas minesweeper.
+ * This is an early implementation of isolated game logic by monstruosoft. 
+ * This filedefines basic typedefs and function prototypes.
  */
 
-#define MINESWEEPER_ROWS        10
-#define MINESWEEPER_COLUMNS     10
-#define MINESWEEPER_MINES       85
-#define MINESWEEPER_CELL_SIZE   20
-#define MINESWEEPER_DANGER       1
-#define MINESWEEPER_WARNING      2
-#define MINESWEEPER_MIN_RATIO    0.1
-#define MINESWEEPER_MAX_RATIO    0.2
+// Game mode flags to be applied by select_game_mode()
+#define GM_DISABLE_KEYBOARD_INPUT   1
+#define GM_DISABLE_MOUSE_INPUT      2
+#define GM_ENABLE_KEYBOARD_INPUT    4
+#define GM_ENABLE_MOUSE_INPUT       8
 
 
 
-typedef struct MINESWEEPER_FIELD {
-// Core fields
-    bool *cells;
-    int *hints;
-    bool *state;
-    int *flags;
-    int rows;
-    int cols;
-    int cell_count;
-    int cell_size;
-    int mine_count;
-    int flags_count;
-    bool complete;
-    int move_count;
-} MINESWEEPER_FIELD;
+enum {GM_GAME, GM_WIN};     // Game modes
 
 
 
-void minesweeper_field_print(MINESWEEPER_FIELD *field);
-MINESWEEPER_FIELD *minesweeper_field_create(int rows, int cols);
-void minesweeper_field_destroy(MINESWEEPER_FIELD *field);
-void minesweeper_field_uncover(MINESWEEPER_FIELD *field, int row, int col);
-bool minesweeper_event_uncover(MINESWEEPER_FIELD *field, int row, int col);
-void minesweeper_event_flag(MINESWEEPER_FIELD *field, int row, int col);
+typedef struct GAME_ACTOR {
+    int x;
+    int y;
+    int age;
+    int state;
+    bool active;
+    bool visible;
+    void *data;
+    void (*control) ();
+    void (*logic) ();
+    void (*draw) ();
+    void (*print) ();
+    void (*destroy)();
+} GAME_ACTOR;
+
+
+
+void select_game_mode(int mode, int flags);
+
+// void game_logic(ALLEGRO_EVENT *event);
+// void game_update();
+
+// void win_logic(ALLEGRO_EVENT *event);
+// void win_update();
+
+
+
+GAME_ACTOR *game_actor_create();  // Create a dummy game actor instance
+void game_actor_print(GAME_ACTOR *actor);
+void game_actor_draw(GAME_ACTOR *actor);
+void game_actor_logic(GAME_ACTOR *actor, ALLEGRO_EVENT *event);
+void game_actor_destroy(GAME_ACTOR *actor);
 
