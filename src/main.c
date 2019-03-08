@@ -290,8 +290,10 @@ void logic(ALLEGRO_EVENT *event) {
     }
     else {
         game_actor_logic(game_actor, event);
+#ifdef DEBUG
         if (event->any.source == al_get_mouse_event_source() && event->mouse.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN)
             game_actor_print(game_actor);
+#endif
     }
 //    else if (event->any.source == al_get_keyboard_event_source()) {
 //        if (event->type == ALLEGRO_EVENT_KEY_DOWN) {
@@ -400,7 +402,9 @@ void initialization(int argc, char **argv) {
     assert(warning && mine && flag);
 
     game_actor = minesweeper_field_actor(game_rows, game_cols);
+#ifdef DEBUG
     game_actor_print(game_actor);
+#endif
 
 // Find potential background images
     int count = 0;
