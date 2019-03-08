@@ -30,3 +30,12 @@ monstruosoft@PC:~/monstrominas/build$ make
 ```
 
 En **Windows** debería ser posible compilar el juego usando *CMake y MinGW* pero buena suerte con eso ya que yo no puedo probar a compilarlo en Windows.
+
+## Ejecutar
+El juego soporta imágenes de fondo en formato JPEG que se eligen al azar desde una carpeta que se pasa como argumento al programa:
+```
+monstruosoft@PC:~/monstrominas/build$ ./main ~/Pictures
+```
+Si no se pasa ninguna ruta como argumento al programa, el juego buscará de forma predeterminada en una carpeta llamada *data* en la misma carpeta que el ejecutable, de esta forma puedes usar la carpeta *data* para colocar ahí imágenes seleccionadas.
+Si no se especifica ninguna ruta como argumento y tampoco existe la carpeta *data*, el juego correrá usando un fondo de color sólido.
+

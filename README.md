@@ -30,3 +30,12 @@ monstruosoft@PC:~/monstrominas/build$ make
 ```
 
 On **Windows**, you should be able to build the game using *CMake + MinGW*. Good luck with that, though, since I can't test the build process on Windows.
+
+## Running
+The game supports background JPEG images chosen at random from a path passed as an argument on the command line:
+```
+monstruosoft@PC:~/monstrominas/build$ ./main ~/Pictures
+```
+If no path is specified, by default the game will look for images in a directory named *data* located in the same directory as the executable, this way you can place selected images in the default path.
+If neither a path is specified nor the *data* folder exists, the game will still run by using a default solid background color.
+
